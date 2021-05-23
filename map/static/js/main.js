@@ -1,4 +1,6 @@
-function init () {
+var route = null;
+
+function init() {
     /**
      * Создание мультимаршрута.
      * @see https://api.yandex.ru/maps/doc/jsapi/2.1/ref/reference/multiRouter.MultiRoute.xml
@@ -20,7 +22,7 @@ function init () {
         data: { content: "Режим редактирования" }
     });
 
-    buttonEditor.events.add("select", function () {
+    buttonEditor.events.add("select", function() {
         /**
          * Включение режима редактирования.
          * В качестве опций может быть передан объект с полями:
@@ -38,14 +40,14 @@ function init () {
         });
     });
 
-    buttonEditor.events.add("deselect", function () {
+    buttonEditor.events.add("deselect", function() {
         // Выключение режима редактирования.
         multiRoute.editor.stop();
     });
 
     // Создаем карту с добавленной на нее кнопкой.
     var myMap = new ymaps.Map('map', {
-        center: [55.78123982928414,37.73150623544307],
+        center: [55.78123982928414, 37.73150623544307],
         zoom: 13,
         controls: [buttonEditor],
         behaviors: ["drag"],
@@ -55,15 +57,15 @@ function init () {
 
     // Добавляем мультимаршрут на карту.
     ZoomLayout = ymaps.templateLayoutFactory.createClass("<div>" +
-                "<div id='zoom-in' class='btn-plus'><i class='icon-plus'></i></div><br>" +
-                "<div id='zoom-out' class='btn-minus'><i class='icon-minus'></i></div>" +
-                "</div>", {
+            "<div id='zoom-in' class='btn-plus'><i class='icon-plus'></i></div><br>" +
+            "<div id='zoom-out' class='btn-minus'><i class='icon-minus'></i></div>" +
+            "</div>", {
 
                 /**
                  * Redefining methods of the layout, in order to perform
                  * additional steps when building and clearing the layout.
                  */
-                build: function () {
+                build: function() {
                     // Calling the "build" parent method.
                     ZoomLayout.superclass.build.call(this);
 
@@ -79,7 +81,7 @@ function init () {
                     $('#zoom-out').bind('click', this.zoomOutCallback);
                 },
 
-                clear: function () {
+                clear: function() {
                     // Removing click handlers.
                     $('#zoom-in').unbind('click', this.zoomInCallback);
                     $('#zoom-out').unbind('click', this.zoomOutCallback);
@@ -88,19 +90,31 @@ function init () {
                     ZoomLayout.superclass.clear.call(this);
                 },
 
-                zoomIn: function () {
+                zoomIn: function() {
                     var map = this.getData().control.getMap();
-                    map.setZoom(map.getZoom() + 1, {checkZoomRange: true});
+                    map.setZoom(map.getZoom() + 1, { checkZoomRange: true });
                 },
 
-                zoomOut: function () {
+                zoomOut: function() {
                     var map = this.getData().control.getMap();
-                    map.setZoom(map.getZoom() - 1, {checkZoomRange: true});
+                    map.setZoom(map.getZoom() - 1, { checkZoomRange: true });
                 }
             }),
-            zoomControl = new ymaps.control.ZoomControl({options: {layout: ZoomLayout}});
+        zoomControl = new ymaps.control.ZoomControl({ options: { layout: ZoomLayout } });
+    route = multiRoute
     myMap.geoObjects.add(multiRoute);
     myMap.controls.add(zoomControl);
 }
 
+function onSubmit() {
+    for (var i = 0; i < route.getPaths().getLength(); i++) {
+        way = route.getPaths().get(i);
+        segments = way.getSegments();
+        for (var j = 0; j < segments.length; j++) {
+            var street = segments[j].getCoordinates();
+            console.log(street);
+        }
+    }
+}
+document.getElementById("submit-button").onclick = function() { console.log("Click") };
 ymaps.ready(init);
