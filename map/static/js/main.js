@@ -116,5 +116,5 @@ function onSubmit() {
         }
     }
 }
-document.getElementById("submit-button").onclick = function() { console.log("Click") };
+document.getElementById("submit-button").onclick = onSubmit;
 ymaps.ready(init);
