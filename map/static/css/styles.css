@@ -1,18 +1,24 @@
+@import url(//fonts.googleapis.com/css?family=Open+Sans);
 body {
-    background-image: url("https://images.hdqwalls.com/download/minimal-lake-sunset-img-1920x1080.jpg");
-    width: 100;
+    background-image: url("space.gif");
+    background-repeat: no-repeat;
+    background-size: cover;
     height: 100%;
 }
 
 #map {
-    min-height: 600px;
+    min-height: 650px;
     max-height: 1200px;
+    border-radius: 30px;
 }
 
 .my_card {
-    width: 80%;
+    border-width: 0px;
+    background-color: transparent;
     margin: 30px auto;
     height: 90%;
+    border: none;
+    box-shadow: none;
 }
 
 .btn-plus {
@@ -74,6 +80,40 @@ body {
 }
 
 .submit {
-    position: relative;
-    right: 0px;
+    width: 300px;
+    height: 60px;
+    border-radius: 50px;
+    font-family: 'Montserrat', sans-serif;
+    background-image: linear-gradient(135deg, #ABDCFF 0%, #0396FF 100%);
+    box-shadow: 0 20px 30px -6px rgba(30, 161, 255, 0.5);
+    outline: none;
+    border: none;
+    cursor: pointer;
+    font-size: 22px;
+    color: white;
+}
+
+.my_footer {
+    display: inline-block;
+}
+
+.route-button {
+    font-family: 'Montserrat', sans-serif;
+    width: 150px;
+    height: 60px;
+    border-radius: 50px;
+    background-image: linear-gradient(135deg, #ABDCFF 0%, #0396FF 100%);
+    background-position: top left;
+    background-repeat: no-repeat;
+    box-shadow: 0 20px 30px -6px rgba(30, 161, 255, 0.5);
+    outline: none;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    color: white;
+}
+
+.my-heading {
+    font-family: 'Montserrat', sans-serif;
+    color: #FDFEFF;
 }

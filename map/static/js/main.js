@@ -1,120 +1,113 @@
-var route = null;
+var map;
+var directionsService;
 
-function init() {
-    /**
-     * Создание мультимаршрута.
-     * @see https://api.yandex.ru/maps/doc/jsapi/2.1/ref/reference/multiRouter.MultiRoute.xml
-     */
-    var multiRoute = new ymaps.multiRouter.MultiRoute({
-        referencePoints: ["Москва, ул.Шербаковская, 38"],
-        params: {
-            //Тип маршрутизации - пешеходная маршрутизация.
-            routingMode: 'pedestrian'
-        }
-    }, {
-        // Тип промежуточных точек, которые могут быть добавлены при редактировании.
-        editorMidPointsType: "via",
-        // В режиме добавления новых путевых точек запрещаем ставить точки поверх объектов карты.
-        editorDrawOver: false
-    });
+var markerArr = [];
+var directions = [];
+var jsonArray = [];
+var json = [];
+var res = [];
 
-    var buttonEditor = new ymaps.control.Button({
-        data: { content: "Режим редактирования" }
-    });
+function initMap() {
+    directionsService = new google.maps.DirectionsService();
+    map = new google.maps.Map(document.getElementById("map"), {
+        center: {
+            lat: 55.78087891775124,
 
-    buttonEditor.events.add("select", function() {
-        /**
-         * Включение режима редактирования.
-         * В качестве опций может быть передан объект с полями:
-         * addWayPoints - разрешает добавление новых путевых точек при клике на карту. Значение по умолчанию: false.
-         * dragWayPoints - разрешает перетаскивание уже существующих путевых точек. Значение по умолчанию: true.
-         * removeWayPoints - разрешает удаление путевых точек при двойном клике по ним. Значение по умолчанию: false.
-         * dragViaPoints - разрешает перетаскивание уже существующих транзитных точек. Значение по умолчанию: true.
-         * removeViaPoints - разрешает удаление транзитных точек при двойном клике по ним. Значение по умолчанию: true.
-         * addMidPoints - разрешает добавление промежуточных транзитных или путевых точек посредством перетаскивания маркера, появляющегося при наведении курсора мыши на активный маршрут. Тип добавляемых точек задается опцией midPointsType. Значение по умолчанию: true
-         * @see https://api.yandex.ru/maps/doc/jsapi/2.1/ref/reference/multiRouter.MultiRoute.xml#editor
-         */
-        multiRoute.editor.start({
-            addWayPoints: true,
-            removeWayPoints: true
-        });
-    });
-
-    buttonEditor.events.add("deselect", function() {
-        // Выключение режима редактирования.
-        multiRoute.editor.stop();
-    });
-
-    // Создаем карту с добавленной на нее кнопкой.
-    var myMap = new ymaps.Map('map', {
-        center: [55.78123982928414, 37.73150623544307],
+            lng: 37.7325491846689
+        },
         zoom: 13,
-        controls: [buttonEditor],
-        behaviors: ["drag"],
-    }, {
-        buttonMaxWidth: 300
+
     });
+    university = new google.maps.LatLng(55.78087891775124, 37.73253845583292);
 
-    // Добавляем мультимаршрут на карту.
-    ZoomLayout = ymaps.templateLayoutFactory.createClass("<div>" +
-            "<div id='zoom-in' class='btn-plus'><i class='icon-plus'></i></div><br>" +
-            "<div id='zoom-out' class='btn-minus'><i class='icon-minus'></i></div>" +
-            "</div>", {
-
-                /**
-                 * Redefining methods of the layout, in order to perform
-                 * additional steps when building and clearing the layout.
-                 */
-                build: function() {
-                    // Calling the "build" parent method.
-                    ZoomLayout.superclass.build.call(this);
-
-                    /**
-                     * Binding handler functions to the context and storing references
-                     * to them in order to unsubscribe from the event later.
-                     */
-                    this.zoomInCallback = ymaps.util.bind(this.zoomIn, this);
-                    this.zoomOutCallback = ymaps.util.bind(this.zoomOut, this);
-
-                    // Beginning to listen for clicks on the layout buttons.
-                    $('#zoom-in').bind('click', this.zoomInCallback);
-                    $('#zoom-out').bind('click', this.zoomOutCallback);
-                },
-
-                clear: function() {
-                    // Removing click handlers.
-                    $('#zoom-in').unbind('click', this.zoomInCallback);
-                    $('#zoom-out').unbind('click', this.zoomOutCallback);
-
-                    // Calling the "clear" parent method.
-                    ZoomLayout.superclass.clear.call(this);
-                },
-
-                zoomIn: function() {
-                    var map = this.getData().control.getMap();
-                    map.setZoom(map.getZoom() + 1, { checkZoomRange: true });
-                },
-
-                zoomOut: function() {
-                    var map = this.getData().control.getMap();
-                    map.setZoom(map.getZoom() - 1, { checkZoomRange: true });
-                }
-            }),
-        zoomControl = new ymaps.control.ZoomControl({ options: { layout: ZoomLayout } });
-    route = multiRoute
-    myMap.geoObjects.add(multiRoute);
-    myMap.controls.add(zoomControl);
+    google.maps.event.addListener(map, 'click', function(e) {
+        placeMarker(e.latLng);
+    });
 }
 
-function onSubmit() {
-    for (var i = 0; i < route.getPaths().getLength(); i++) {
-        way = route.getPaths().get(i);
-        segments = way.getSegments();
-        for (var j = 0; j < segments.length; j++) {
-            var street = segments[j].getCoordinates();
-            console.log(street);
+
+function placeMarker(position) {
+    var marker = new google.maps.Marker({
+        position: position,
+        map: map,
+        draggable: true
+    });
+    google.maps.event.addListener(marker, 'dragend', function(marker) {
+        calculateAndDisplayRoute();
+    });
+    marker.addListener("click", () => {
+        for (let i = 0; i < markerArr.length; i++) {
+            if (markerArr[i] == marker) {
+                markerArr[i].setMap(null);
+                markerArr = markerArr.filter(elem => elem.map != null);
+            }
         }
+        calculateAndDisplayRoute();
+    });
+    markerArr.push(marker);
+    calculateAndDisplayRoute();
+}
+
+function calculateAndDisplayRoute() {
+    for (var i = 0; i < directions.length; i++) {
+        directions[i].setMap(null);
+    }
+    directions = [];
+    res = [];
+    for (let i = 0; i < markerArr.length - 1; i++) {
+        directionsService.route({
+                origin: new google.maps.LatLng(markerArr[i].position.lat(), markerArr[i].position.lng()),
+                destination: new google.maps.LatLng(markerArr[i + 1].position.lat(), markerArr[i + 1].position.lng()),
+                travelMode: google.maps.TravelMode.WALKING
+            },
+            (result, status) => {
+                if (status === "OK") {
+
+                    var dirRenderer = new google.maps.DirectionsRenderer({
+                        map: map,
+                        suppressMarkers: true,
+                        suppressInfoWindows: true
+                    });
+
+                    dirRenderer.setDirections(result);
+                    directions.push(dirRenderer);
+
+                    var pointsArray = [];
+                    for (var p of result.routes) {
+                        pointsArray = p.overview_path;
+                        for (var point of pointsArray) {
+                            var point_cords = {
+                                "lat": point.lat(),
+                                "lng": point.lng()
+                            }
+                            res.push(point_cords);
+                        }
+                    }
+
+                }
+            }
+        );
     }
 }
-document.getElementById("submit-button").onclick = onSubmit;
-ymaps.ready(init);
+window.onload = function() {
+    document.getElementById("submit-button").onclick = function() {
+        jsonArray = JSON.stringify(res)
+        json = [jsonArray];
+        var blob1 = new Blob(json, { type: "json;charset=utf-8" });
+
+        //Check the Browser.
+        var isIE = false || !!document.documentMode;
+        if (isIE) {
+            window.navigator.msSaveBlob(blob1, "Data.json");
+        } else {
+            var url = window.URL || window.webkitURL;
+            link = url.createObjectURL(blob1);
+            var a = document.createElement("a");
+            a.download = "Data.json";
+            a.href = link;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    }
+};
